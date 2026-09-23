@@ -1,0 +1,74 @@
+name: Build Sona APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Get project files
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Extract the starter
+        run: |
+          test -f sona-flutter-starter.zip || { echo 'Upload sona-flutter-starter.zip to the repository root first.'; exit 1; }
+          unzip -q sona-flutter-starter.zip -d app-source
+
+      - name: Generate Android project
+        working-directory: app-source/sona
+        run: flutter create --empty --platforms=android --project-name=sona --org=com.example --no-pub .
+
+      - name: Configure Android
+        working-directory: app-source/sona
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          text = manifest.read_text()
+          if 'android.permission.INTERNET' not in text:
+              text = text.replace('<application', '<uses-permission android:name="android.permission.INTERNET"/>\n    <application', 1)
+          text = text.replace('android:label="sona"', 'android:label="Sona"')
+          manifest.write_text(text)
+          gradle = Path('android/app/build.gradle.kts')
+          if gradle.exists():
+              gradle.write_text(gradle.read_text().replace('minSdk = flutter.minSdkVersion', 'minSdk = 24'))
+          legacy = Path('android/app/build.gradle')
+          if legacy.exists():
+              legacy.write_text(legacy.read_text().replace('minSdkVersion flutter.minSdkVersion', 'minSdkVersion 24').replace('minSdk flutter.minSdkVersion', 'minSdk 24'))
+          PY
+
+      - name: Install dependencies
+        working-directory: app-source/sona
+        run: flutter pub get
+
+      - name: Check Dart code
+        working-directory: app-source/sona
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Build an installable test APK
+        working-directory: app-source/sona
+        run: flutter build apk --debug
+
+      - name: Save APK for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sona-Android-APK
+          path: app-source/sona/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
