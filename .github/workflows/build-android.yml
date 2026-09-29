@@ -81,8 +81,8 @@ jobs:
           flutter create --empty --platforms=android --project-name=sona --org=com.example --no-pub .
 
           cp /tmp/raaga-AndroidManifest.xml android/app/src/main/AndroidManifest.xml
-          rm -rf android/app/src/main/res
-          cp -r /tmp/raaga-res android/app/src/main/res
+          # Merge Raaga resources on top of the generated ones (keeps styles.xml with LaunchTheme/NormalTheme)
+          cp -r /tmp/raaga-res/. android/app/src/main/res/
 
           python3 - <<'PY'
           from pathlib import Path
@@ -125,6 +125,8 @@ jobs:
           echo 'Android SDK configuration:'
           grep -nE 'compileSdk|minSdk|targetSdk' android/app/build.gradle.kts 2>/dev/null || true
           grep -nE 'compileSdk|minSdk|targetSdk' android/app/build.gradle 2>/dev/null || true
+          echo 'Resource files:'
+          find android/app/src/main/res -type f | sort
 
       - name: Install dependencies
         working-directory: app-source/sona
