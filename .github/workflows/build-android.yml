@@ -27,7 +27,7 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Install Android SDK 37
+      - name: Install Android SDK 36
         shell: bash
         run: |
           SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
@@ -43,7 +43,7 @@ jobs:
           echo "Using $SDKMANAGER"
 
           yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-          "$SDKMANAGER" "platforms;android-37" "build-tools;36.0.0"
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Extract the starter
         run: |
@@ -76,17 +76,17 @@ jobs:
 
               text = re.sub(
                   r'compileSdk\s*=\s*flutter\.compileSdkVersion',
-                  'compileSdk = 37',
+                  'compileSdk = 36',
                   text,
               )
               text = re.sub(
                   r'compileSdkVersion\s+flutter\.compileSdkVersion',
-                  'compileSdkVersion 37',
+                  'compileSdkVersion 36',
                   text,
               )
               text = re.sub(
                   r'compileSdk\s+flutter\.compileSdkVersion',
-                  'compileSdk 37',
+                  'compileSdk 36',
                   text,
               )
 
